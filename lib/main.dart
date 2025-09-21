@@ -1,34 +1,12 @@
 import 'package:flutter/material.dart';
 import 'student_detail.dart';
 import 'add_student.dart';
+import 'student.dart';
+import 'db.dart';
 
-void main() => runApp(const StudentApp());
-
-class Student {
-  final String id;
-  String name;
-  String nis;
-  String grade;
-  String address;
-  String birthdate;
-  String bloodtype;
-  String sex;
-  String hobby;
-  String father;
-  String mother;
-  Student({
-    required this.id,
-    required this.name,
-    required this.nis,
-    required this.grade,
-    required this.address,
-    required this.birthdate,
-    required this.bloodtype,
-    required this.sex,
-    required this.hobby,
-    required this.father,
-    required this.mother,
-  });
+void main() {
+  DatabaseHelper();
+  runApp(const StudentApp());
 }
 
 class AppState extends ChangeNotifier {
@@ -113,9 +91,25 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final ctrl = TextEditingController();
+  DatabaseHelper db = DatabaseHelper();
+  bool initialize = true;
+
+  void getStudents(state) async {
+    print("This method is called");
+    if (initialize) {
+      final students = await db.students();
+      for (Student student in students) {
+        state.add(student);
+      }
+      initialize = false;
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = StateProvider.of(context);
+    getStudents(state);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Data Siswa'),
