@@ -58,7 +58,6 @@ class _AddStudentPageState extends State<AddStudentPage> {
               },
               onChanged: (v) {
                 nis.text = v.replaceAll(RegExp(r'\D'), '');
-                print(nis.text);
               },
             ),
             const SizedBox(height: 12),
