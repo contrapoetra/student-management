@@ -27,6 +27,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
   void printUpdate() async {
     print(await db.students());
   }
+
   @override
   Widget build(BuildContext context) {
     final state = StateProvider.of(context);
@@ -47,7 +48,18 @@ class _AddStudentPageState extends State<AddStudentPage> {
               controller: nis,
               decoration: const InputDecoration(labelText: 'NIS'),
               keyboardType: TextInputType.number,
-              validator: (v) => v == null || v.isEmpty ? 'Wajib diisi' : null,
+              validator: (v) {
+                if (v == null || v.isEmpty) {
+                  return 'Wajib diisi';
+                } else {
+                  bool exists = state.students.any((s) => s.nis == v);
+                  return exists ? 'NIS sudah digunakan' : null;
+                }
+              },
+              onChanged: (v) {
+                nis.text = v.replaceAll(RegExp(r'\D'), '');
+                print(nis.text);
+              },
             ),
             const SizedBox(height: 12),
             TextFormField(
