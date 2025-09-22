@@ -9,9 +9,12 @@ void main() {
   runApp(const StudentApp());
 }
 
+enum SortOptions { id, name, grade }
+
 class AppState extends ChangeNotifier {
   final List<Student> _students = [];
   String _q = '';
+  SortOptions sortBy = SortOptions.id;
   List<Student> get students {
     if (_q.isEmpty) return List.unmodifiable(_students);
     return _students
@@ -48,6 +51,36 @@ class AppState extends ChangeNotifier {
     } catch (_) {
       return null;
     }
+  }
+
+  void setSortBy(SortOptions sortBy) {
+    this.sortBy = sortBy;
+    switch (sortBy) {
+      case SortOptions.name:
+        sortByName();
+        break;
+      case SortOptions.grade:
+        sortByGrade();
+        break;
+      case SortOptions.id:
+        sortByID();
+        break;
+    }
+  }
+
+  void sortByName() {
+    _students.sort((a, b) => a.name.compareTo(b.name));
+    notifyListeners();
+  }
+
+  void sortByGrade() {
+    _students.sort((a, b) => a.grade.compareTo(b.grade));
+    notifyListeners();
+  }
+
+  void sortByID() {
+    _students.sort((a, b) => a.id.compareTo(b.id));
+    notifyListeners();
   }
 }
 
@@ -95,14 +128,15 @@ class _HomePageState extends State<HomePage> {
   bool initialize = true;
 
   void getStudents(state) async {
-    print("This method is called");
+    // print("This method is called");
     if (initialize) {
       final students = await db.students();
       for (Student student in students) {
         state.add(student);
       }
       initialize = false;
-    };
+    }
+    ;
   }
 
   @override
@@ -112,21 +146,29 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Data Siswa'),
+        title: const Text('Data Siswa', style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
+          preferredSize: const Size.fromHeight(150),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: TextField(
-              controller: ctrl,
-              onChanged: state.setQuery,
-              decoration: InputDecoration(
-                hintText: 'Cari nama siswa',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+            child: Column(
+              children: [
+                TextField(
+                  controller: ctrl,
+                  onChanged: state.setQuery,
+                  decoration: InputDecoration(
+                    hintText: 'Cari nama siswa',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
-              ),
+                SizedBox(height: 20),
+                // Row(children: [Text('Sort:'), SizedBox(width: 12), Expanded(child: SelectSort())]),
+                Row(children: [Expanded(child: SelectSort())]),
+                // SelectSort(),
+              ],
             ),
           ),
         ),
@@ -180,6 +222,51 @@ class _HomePageState extends State<HomePage> {
         icon: const Icon(Icons.add),
         label: const Text('Tambah'),
       ),
+    );
+  }
+}
+
+class SelectSort extends StatefulWidget {
+  const SelectSort({super.key});
+
+  @override
+  State<SelectSort> createState() => _SelectSortState();
+}
+
+class _SelectSortState extends State<SelectSort> {
+  SortOptions selectedSort = SortOptions.id;
+
+  @override
+  Widget build(BuildContext context) {
+    final state = StateProvider.of(context);
+    return SegmentedButton<SortOptions>(
+      style: ButtonStyle(
+        padding: WidgetStateProperty.all(EdgeInsets.symmetric(horizontal: 8.0, vertical: 0.0)), // Adjust these values
+      ),
+      segments: const <ButtonSegment<SortOptions>>[
+        ButtonSegment<SortOptions>(
+          value: SortOptions.id,
+          label: Text('Unsorted', style: TextStyle(fontSize: 12)),
+          icon: Icon(Icons.sort),
+        ),
+        ButtonSegment<SortOptions>(
+          value: SortOptions.name,
+          label: Text('Nama', style: TextStyle(fontSize: 12)),
+          icon: Icon(Icons.sort),
+        ),
+        ButtonSegment<SortOptions>(
+          value: SortOptions.grade,
+          label: Text('Kelas', style: TextStyle(fontSize: 12)),
+          icon: Icon(Icons.sort),
+        ),
+      ],
+      selected: <SortOptions>{selectedSort},
+      onSelectionChanged: (Set<SortOptions> select) {
+        setState(() {
+          selectedSort = select.first;
+          state.setSortBy(select.first);
+        });
+      },
     );
   }
 }
