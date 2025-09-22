@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'student_detail.dart';
 import 'add_student.dart';
 import 'student.dart';
 import 'db.dart';
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:csv/csv.dart';
+import 'dart:math';
+
 
 void main() {
   DatabaseHelper();
@@ -136,7 +142,59 @@ class _HomePageState extends State<HomePage> {
       }
       initialize = false;
     }
-    ;
+  }
+
+  Future<File> pickFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles();
+    return File(result!.files.first.path!);
+  }
+
+  Future<File> saveFile(data) async {
+    final Uint8List bytes = Uint8List.fromList(data.codeUnits);
+    String? output = await FilePicker.platform.saveFile(
+      dialogTitle: 'Please select an output file:',
+      fileName: 'data-siswa.csv',
+      bytes: bytes,
+    );
+    print("This is executed");
+    return File(output!);
+  }
+
+  Future<String> readFile(path) async {
+    try {
+      final file = path;
+
+      // Read the file
+      final contents = await file.readAsString();
+
+      return (contents);
+    } catch (e) {
+      // If encountering an error, return 0
+      return "";
+    }
+  }
+
+  void importData(state, String csv) {
+    List<String> rows = csv.split('\n');
+    for (String row in rows) {
+      List<String> columns = row.split(',');
+      final id = 'DateTime.now().millisecondsSinceEpoch}${Random().nextInt(999)}';
+      Student student = Student(
+        id: id,
+        name: columns[0],
+        nis: columns[1],
+        grade: columns[2],
+        address: columns[3],
+        birthdate: columns[4],
+        bloodtype: columns[5],
+        sex: columns[6],
+        hobby: columns[7],
+        father: columns[8],
+        mother: columns[9],
+      );
+      state.add(student);
+      
+    }
   }
 
   @override
@@ -146,7 +204,79 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Data Siswa', style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Data Siswa',
+              style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+            ),
+            IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () {
+                showMenu(
+                  context: context,
+                  position: RelativeRect.fromLTRB(
+                    MediaQuery.of(context).size.width - 100,
+                    kToolbarHeight,
+                    0,
+                    0,
+                  ),
+                  items: [
+                    const PopupMenuItem(
+                      value: 'import',
+                      child: Row(
+                        children: [
+                          Icon(Icons.file_download),
+                          SizedBox(width: 8),
+                          Text('Import Data'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'export',
+                      child: Row(
+                        children: [
+                          Icon(Icons.file_upload),
+                          SizedBox(width: 8),
+                          Text('Export Data'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ).then((value) {
+                  if (value == 'import') {
+                    pickFile().then((file) async {
+                      importData(state, await readFile(file));
+                    });
+                  } else if (value == 'export') {
+                    List<List<dynamic>> data = state.students
+                        .map(
+                          (student) => [
+                            student.name,
+                            student.nis,
+                            student.grade,
+                            student.address,
+                            student.birthdate,
+                            student.bloodtype,
+                            student.sex,
+                            student.hobby,
+                            student.father,
+                            student.mother,
+                          ],
+                        )
+                        .toList();
+                    String csv = const ListToCsvConverter().convert(data);
+                    print(csv);
+                    saveFile(csv).then((file) {
+                      print(file.path);
+                    });
+                  }
+                });
+              },
+            ),
+          ],
+        ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(150),
           child: Padding(
@@ -241,7 +371,9 @@ class _SelectSortState extends State<SelectSort> {
     final state = StateProvider.of(context);
     return SegmentedButton<SortOptions>(
       style: ButtonStyle(
-        padding: WidgetStateProperty.all(EdgeInsets.symmetric(horizontal: 8.0, vertical: 0.0)), // Adjust these values
+        padding: WidgetStateProperty.all(
+          EdgeInsets.symmetric(horizontal: 8.0, vertical: 0.0),
+        ), // Adjust these values
       ),
       segments: const <ButtonSegment<SortOptions>>[
         ButtonSegment<SortOptions>(
