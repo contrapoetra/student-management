@@ -9,7 +9,6 @@ import 'dart:typed_data';
 import 'package:csv/csv.dart';
 import 'dart:math';
 
-
 void main() {
   DatabaseHelper();
   runApp(const StudentApp());
@@ -134,7 +133,7 @@ class _HomePageState extends State<HomePage> {
   bool initialize = true;
 
   void getStudents(state) async {
-    // print("This method is called");
+    print("This method is called");
     if (initialize) {
       final students = await db.students();
       for (Student student in students) {
@@ -164,12 +163,10 @@ class _HomePageState extends State<HomePage> {
     try {
       final file = path;
 
-      // Read the file
       final contents = await file.readAsString();
 
       return (contents);
     } catch (e) {
-      // If encountering an error, return 0
       return "";
     }
   }
@@ -178,7 +175,8 @@ class _HomePageState extends State<HomePage> {
     List<String> rows = csv.split('\n');
     for (String row in rows) {
       List<String> columns = row.split(',');
-      final id = 'DateTime.now().millisecondsSinceEpoch}${Random().nextInt(999)}';
+      final id =
+          'DateTime.now().millisecondsSinceEpoch}${Random().nextInt(999)}';
       Student student = Student(
         id: id,
         name: columns[0],
@@ -193,7 +191,7 @@ class _HomePageState extends State<HomePage> {
         mother: columns[9],
       );
       state.add(student);
-      
+      db.insertStudent(student);
     }
   }
 
